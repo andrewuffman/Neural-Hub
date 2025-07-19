@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "🔧 Uploading Tailwind CSS Fixes..."
+echo ""
+echo "✅ Fixed files:"
+echo "   - Removed tailwind.config.js"
+echo "   - Updated postcss.config.js (removed tailwind)"
+echo "   - Updated package.json (added autoprefixer + postcss)"
+echo ""
+echo "📋 Upload Instructions:"
+echo "1. Go to: https://github.com/andrewuffman/Neural-Hub"
+echo "2. Delete tailwind.config.js from GitHub"
+echo "3. Upload these updated files:"
+echo "   - postcss.config.js (without tailwind)"
+echo "   - package.json (with autoprefixer + postcss)"
+echo "4. Commit with message: 'Fix: Remove Tailwind CSS dependencies'"
+echo ""
+echo "🎯 This should resolve the 'Cannot find module tailwindcss' error!" 
