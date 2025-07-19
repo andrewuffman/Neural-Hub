@@ -138,6 +138,24 @@ export default function HomePage() {
               Features
             </a>
             <a 
+              href="/login"
+              style={{
+                color: '#4a5568',
+                textDecoration: 'none',
+                fontWeight: '500',
+                fontSize: '0.95rem',
+                transition: 'color 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = '#667eea'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = '#4a5568'
+              }}
+            >
+              Sign In
+            </a>
+            <a 
               href="/dashboard"
               style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

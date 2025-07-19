@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface ContentItem {
   id: string
@@ -15,11 +16,24 @@ interface ContentItem {
   codeLanguage?: string
 }
 
+interface User {
+  id: string
+  email: string
+  name: string
+  settings: {
+    theme: string
+    notifications: boolean
+  }
+}
+
 export default function Dashboard() {
+  const [user, setUser] = useState<User | null>(null)
+  const [contentItems, setContentItems] = useState<ContentItem[]>([])
   const [activeTab, setActiveTab] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [newContent, setNewContent] = useState({
     title: '',
     type: 'text' as const,
@@ -27,187 +41,110 @@ export default function Dashboard() {
     content: '',
     tags: ''
   })
-
-  // Enhanced mock data with sample conversations
-  const [contentItems, setContentItems] = useState<ContentItem[]>([
-    {
-      id: '1',
-      title: 'ChatGPT: Marketing Strategy for SaaS Startup',
-      type: 'chat',
-      source: 'ChatGPT',
-      date: '2024-01-15',
-      tags: ['marketing', 'strategy', 'saas', 'startup'],
-      conversation: [
-        {
-          role: 'user',
-          message: 'I need help creating a marketing strategy for my SaaS startup. We offer project management software for remote teams.',
-          timestamp: '10:30 AM'
-        },
-        {
-          role: 'assistant',
-          message: 'Great! Let\'s create a comprehensive marketing strategy. First, let\'s identify your target audience: remote teams, project managers, and small to medium businesses. What\'s your current user base size and what channels are you currently using?',
-          timestamp: '10:31 AM'
-        },
-        {
-          role: 'user',
-          message: 'We have about 500 users, mostly from LinkedIn and word of mouth. Our budget is limited - around $5k/month for marketing.',
-          timestamp: '10:32 AM'
-        },
-        {
-          role: 'assistant',
-          message: 'Perfect! With a $5k budget, I recommend this strategy:\n\n1. **Content Marketing (40% - $2k)**:\n   - Weekly blog posts about remote work\n   - LinkedIn thought leadership content\n   - Guest posts on project management blogs\n\n2. **Paid Social (30% - $1.5k)**:\n   - LinkedIn ads targeting project managers\n   - Facebook/Instagram for broader awareness\n\n3. **SEO (20% - $1k)**:\n   - Keyword optimization for "project management software"\n   - Local SEO for remote work communities\n\n4. **Partnerships (10% - $500)**:\n   - Co-marketing with remote work tools\n   - Affiliate programs\n\nWould you like me to dive deeper into any of these areas?',
-          timestamp: '10:33 AM'
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Midjourney: Product Mockup for Mobile App',
-      type: 'image',
-      source: 'Midjourney',
-      date: '2024-01-14',
-      tags: ['design', 'mobile', 'app', 'mockup'],
-      imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop',
-      content: 'Generated mobile app interface mockup with modern design, showing dashboard layout with charts and navigation elements.'
-    },
-    {
-      id: '3',
-      title: 'Claude: Python Data Analysis Script',
-      type: 'code',
-      source: 'Claude',
-      date: '2024-01-13',
-      tags: ['python', 'data', 'analysis', 'pandas'],
-      codeLanguage: 'python',
-      content: `import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Load and analyze user engagement data
-df = pd.read_csv('user_engagement.csv')
-
-# Calculate key metrics
-daily_active_users = df.groupby('date')['user_id'].nunique()
-avg_session_duration = df.groupby('user_id')['session_duration'].mean()
-
-# Create visualization
-plt.figure(figsize=(12, 6))
-daily_active_users.plot(kind='line')
-plt.title('Daily Active Users Over Time')
-plt.xlabel('Date')
-plt.ylabel('Active Users')
-plt.show()
-
-# User segmentation analysis
-user_segments = df.groupby('user_type').agg({
-    'session_duration': 'mean',
-    'page_views': 'sum',
-    'conversion_rate': 'mean'
-}).round(2)
-
-print("User Segment Analysis:")
-print(user_segments)`
-    },
-    {
-      id: '4',
-      title: 'ChatGPT: Content Calendar Planning',
-      type: 'chat',
-      source: 'ChatGPT',
-      date: '2024-01-12',
-      tags: ['content', 'calendar', 'planning', 'social-media'],
-      conversation: [
-        {
-          role: 'user',
-          message: 'I need help creating a content calendar for our tech blog. We want to post 3 times per week.',
-          timestamp: '2:15 PM'
-        },
-        {
-          role: 'assistant',
-          message: 'I\'ll help you create a structured content calendar! Here\'s a suggested format:\n\n**Monday**: How-to/Tutorial posts\n**Wednesday**: Industry insights/Thought leadership\n**Friday**: Case studies/Success stories\n\nFor each post, plan:\n- Topic\n- Target keyword\n- Call-to-action\n- Social media angles\n\nWould you like me to suggest specific topics for the next month?',
-          timestamp: '2:16 PM'
-        },
-        {
-          role: 'user',
-          message: 'Yes, please! We focus on AI and productivity tools.',
-          timestamp: '2:17 PM'
-        },
-        {
-          role: 'assistant',
-          message: 'Perfect! Here\'s your 4-week content calendar:\n\n**Week 1**:\n- Mon: "10 AI Tools That Will 10x Your Productivity"\n- Wed: "The Future of Work: AI Integration Strategies"\n- Fri: "How Company X Increased Efficiency by 300% with AI"\n\n**Week 2**:\n- Mon: "Building Your First AI-Powered Workflow"\n- Wed: "AI Ethics in the Workplace"\n- Fri: "Productivity Metrics That Actually Matter"\n\n**Week 3**:\n- Mon: "Automating Email Management with AI"\n- Wed: "The ROI of AI Implementation"\n- Fri: "Remote Team Collaboration Tools"\n\n**Week 4**:\n- Mon: "AI-Powered Project Management"\n- Wed: "Data-Driven Decision Making"\n- Fri: "Scaling Your Business with AI"\n\nEach post should be 1500-2000 words with actionable takeaways.',
-          timestamp: '2:18 PM'
-        }
-      ]
-    },
-    {
-      id: '5',
-      title: 'Claude: React Component Architecture',
-      type: 'code',
-      source: 'Claude',
-      date: '2024-01-11',
-      tags: ['react', 'javascript', 'frontend', 'architecture'],
-      codeLanguage: 'javascript',
-      content: `// Dashboard Component Architecture
-import React, { useState, useEffect } from 'react';
-
-const Dashboard = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter()
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await fetch('/api/dashboard');
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <LoadingSpinner />;
-
-  return (
-    <div className="dashboard">
-      <Header />
-      <MetricsGrid data={data.metrics} />
-      <ContentList data={data.content} />
-      <ActivityFeed data={data.activity} />
-    </div>
-  );
-};
-
-export default Dashboard;`
-    },
-    {
-      id: '6',
-      title: 'Midjourney: Brand Identity Concepts',
-      type: 'image',
-      source: 'Midjourney',
-      date: '2024-01-10',
-      tags: ['branding', 'logo', 'identity', 'design'],
-      imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
-      content: 'Brand identity concept showing logo variations, color palette, and typography options for a modern tech company.'
-    }
-  ])
-
-  const handleAddContent = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newItem: ContentItem = {
-      id: Date.now().toString(),
-      title: newContent.title,
-      type: newContent.type,
-      source: newContent.source,
-      date: new Date().toISOString().split('T')[0],
-      tags: newContent.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-    }
+    // Check authentication
+    const token = localStorage.getItem('token')
+    const userData = localStorage.getItem('user')
     
-    setContentItems([newItem, ...contentItems])
-    setNewContent({ title: '', type: 'text', source: '', content: '', tags: '' })
-    setShowAddForm(false)
+    if (!token || !userData) {
+      router.push('/login')
+      return
+    }
+
+    try {
+      setUser(JSON.parse(userData))
+      fetchUserContent(token)
+    } catch (error) {
+      console.error('Error loading user data:', error)
+      router.push('/login')
+    }
+  }, [router])
+
+  const fetchUserContent = async (token: string) => {
+    try {
+      const response = await fetch('/api/content', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setContentItems(data.content || [])
+      } else if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        router.push('/login')
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAddContent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    try {
+      const response = await fetch('/api/content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: newContent.title,
+          type: newContent.type,
+          source: newContent.source,
+          content: newContent.content,
+          tags: newContent.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setContentItems([data.content, ...contentItems])
+        setNewContent({ title: '', type: 'text', source: '', content: '', tags: '' })
+        setShowAddForm(false)
+      }
+    } catch (error) {
+      console.error('Error adding content:', error)
+    }
+  }
+
+  const handleDeleteContent = async (id: string) => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    try {
+      const response = await fetch(`/api/content?id=${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        setContentItems(contentItems.filter(item => item.id !== id))
+        if (selectedContent?.id === id) {
+          setSelectedContent(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting content:', error)
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    router.push('/')
   }
 
   const filteredContent = contentItems.filter(item => {
@@ -240,6 +177,24 @@ export default Dashboard;`
       }}>
         <code>{code}</code>
       </pre>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#fafafa',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '16px' }}>⏳</div>
+          <p style={{ color: '#666', fontSize: '1.1rem' }}>Loading your content...</p>
+        </div>
+      </div>
     )
   }
 
@@ -301,13 +256,13 @@ export default Dashboard;`
                 Neural Hub Dashboard
               </h1>
               <p style={{ margin: '4px 0 0 0', opacity: 0.8, fontSize: '0.9rem' }}>
-                Organize your AI content
+                Welcome back, {user?.name || 'User'}
               </p>
             </div>
           </a>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <a 
-              href="/"
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={handleLogout}
               style={{
                 background: 'rgba(255,255,255,0.2)',
                 color: 'white',
@@ -317,7 +272,6 @@ export default Dashboard;`
                 cursor: 'pointer',
                 fontWeight: '500',
                 fontSize: '0.95rem',
-                textDecoration: 'none',
                 transition: 'all 0.2s ease'
               }}
               onMouseOver={(e) => {
@@ -327,8 +281,8 @@ export default Dashboard;`
                 e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
               }}
             >
-              ← Back to Home
-            </a>
+              Logout
+            </button>
             <button
               onClick={() => setShowAddForm(true)}
               style={{
@@ -442,7 +396,8 @@ export default Dashboard;`
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               border: '1px solid #f0f0f0',
               transition: 'all 0.2s ease',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              position: 'relative'
             }}
             onMouseOver={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)'
@@ -454,6 +409,40 @@ export default Dashboard;`
             }}
             onClick={() => setSelectedContent(item)}
             >
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteContent(item.id)
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = '#fecaca'
+                  e.currentTarget.style.transform = 'scale(1.1)'
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = '#fee2e2'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                ×
+              </button>
+              
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
                 <span style={{ 
                   fontSize: '2rem', 
@@ -515,7 +504,11 @@ export default Dashboard;`
           }}>
             <div style={{ fontSize: '4rem', marginBottom: '24px', opacity: 0.5 }}>📭</div>
             <h3 style={{ margin: '0 0 12px 0', color: '#666', fontWeight: '600' }}>No content found</h3>
-            <p style={{ margin: 0, fontSize: '0.95rem' }}>Try adjusting your search or filters, or add some new content!</p>
+            <p style={{ margin: 0, fontSize: '0.95rem' }}>
+              {contentItems.length === 0 
+                ? "You haven't added any content yet. Click 'Add Content' to get started!" 
+                : "Try adjusting your search or filters, or add some new content!"}
+            </p>
           </div>
         )}
       </div>
@@ -813,6 +806,43 @@ export default Dashboard;`
                     outline: 'none',
                     transition: 'all 0.2s ease',
                     fontFamily: 'inherit'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#667eea'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e5e5e5'
+                    e.target.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: '600',
+                  color: '#333',
+                  fontSize: '0.9rem'
+                }}>
+                  Content
+                </label>
+                <textarea
+                  value={newContent.content}
+                  onChange={(e) => setNewContent({...newContent, content: e.target.value})}
+                  placeholder="Enter your content here..."
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '1px solid #e5e5e5',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit',
+                    resize: 'vertical'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#667eea'
