@@ -9,12 +9,17 @@ interface ContentItem {
   source: string
   date: string
   tags: string[]
+  content?: string
+  conversation?: Array<{ role: 'user' | 'assistant', message: string, timestamp: string }>
+  imageUrl?: string
+  codeLanguage?: string
 }
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null)
   const [newContent, setNewContent] = useState({
     title: '',
     type: 'text' as const,
@@ -23,31 +28,169 @@ export default function Dashboard() {
     tags: ''
   })
 
-  // Mock data
+  // Enhanced mock data with sample conversations
   const [contentItems, setContentItems] = useState<ContentItem[]>([
     {
       id: '1',
-      title: 'ChatGPT Conversation: Marketing Strategy',
+      title: 'ChatGPT: Marketing Strategy for SaaS Startup',
       type: 'chat',
       source: 'ChatGPT',
       date: '2024-01-15',
-      tags: ['marketing', 'strategy', 'business']
+      tags: ['marketing', 'strategy', 'saas', 'startup'],
+      conversation: [
+        {
+          role: 'user',
+          message: 'I need help creating a marketing strategy for my SaaS startup. We offer project management software for remote teams.',
+          timestamp: '10:30 AM'
+        },
+        {
+          role: 'assistant',
+          message: 'Great! Let\'s create a comprehensive marketing strategy. First, let\'s identify your target audience: remote teams, project managers, and small to medium businesses. What\'s your current user base size and what channels are you currently using?',
+          timestamp: '10:31 AM'
+        },
+        {
+          role: 'user',
+          message: 'We have about 500 users, mostly from LinkedIn and word of mouth. Our budget is limited - around $5k/month for marketing.',
+          timestamp: '10:32 AM'
+        },
+        {
+          role: 'assistant',
+          message: 'Perfect! With a $5k budget, I recommend this strategy:\n\n1. **Content Marketing (40% - $2k)**:\n   - Weekly blog posts about remote work\n   - LinkedIn thought leadership content\n   - Guest posts on project management blogs\n\n2. **Paid Social (30% - $1.5k)**:\n   - LinkedIn ads targeting project managers\n   - Facebook/Instagram for broader awareness\n\n3. **SEO (20% - $1k)**:\n   - Keyword optimization for "project management software"\n   - Local SEO for remote work communities\n\n4. **Partnerships (10% - $500)**:\n   - Co-marketing with remote work tools\n   - Affiliate programs\n\nWould you like me to dive deeper into any of these areas?',
+          timestamp: '10:33 AM'
+        }
+      ]
     },
     {
       id: '2',
-      title: 'Midjourney: Product Mockup',
+      title: 'Midjourney: Product Mockup for Mobile App',
       type: 'image',
       source: 'Midjourney',
       date: '2024-01-14',
-      tags: ['design', 'product', 'mockup']
+      tags: ['design', 'mobile', 'app', 'mockup'],
+      imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=300&fit=crop',
+      content: 'Generated mobile app interface mockup with modern design, showing dashboard layout with charts and navigation elements.'
     },
     {
       id: '3',
-      title: 'Python Script: Data Analysis',
+      title: 'Claude: Python Data Analysis Script',
       type: 'code',
       source: 'Claude',
       date: '2024-01-13',
-      tags: ['python', 'data', 'analysis']
+      tags: ['python', 'data', 'analysis', 'pandas'],
+      codeLanguage: 'python',
+      content: `import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load and analyze user engagement data
+df = pd.read_csv('user_engagement.csv')
+
+# Calculate key metrics
+daily_active_users = df.groupby('date')['user_id'].nunique()
+avg_session_duration = df.groupby('user_id')['session_duration'].mean()
+
+# Create visualization
+plt.figure(figsize=(12, 6))
+daily_active_users.plot(kind='line')
+plt.title('Daily Active Users Over Time')
+plt.xlabel('Date')
+plt.ylabel('Active Users')
+plt.show()
+
+# User segmentation analysis
+user_segments = df.groupby('user_type').agg({
+    'session_duration': 'mean',
+    'page_views': 'sum',
+    'conversion_rate': 'mean'
+}).round(2)
+
+print("User Segment Analysis:")
+print(user_segments)`
+    },
+    {
+      id: '4',
+      title: 'ChatGPT: Content Calendar Planning',
+      type: 'chat',
+      source: 'ChatGPT',
+      date: '2024-01-12',
+      tags: ['content', 'calendar', 'planning', 'social-media'],
+      conversation: [
+        {
+          role: 'user',
+          message: 'I need help creating a content calendar for our tech blog. We want to post 3 times per week.',
+          timestamp: '2:15 PM'
+        },
+        {
+          role: 'assistant',
+          message: 'I\'ll help you create a structured content calendar! Here\'s a suggested format:\n\n**Monday**: How-to/Tutorial posts\n**Wednesday**: Industry insights/Thought leadership\n**Friday**: Case studies/Success stories\n\nFor each post, plan:\n- Topic\n- Target keyword\n- Call-to-action\n- Social media angles\n\nWould you like me to suggest specific topics for the next month?',
+          timestamp: '2:16 PM'
+        },
+        {
+          role: 'user',
+          message: 'Yes, please! We focus on AI and productivity tools.',
+          timestamp: '2:17 PM'
+        },
+        {
+          role: 'assistant',
+          message: 'Perfect! Here\'s your 4-week content calendar:\n\n**Week 1**:\n- Mon: "10 AI Tools That Will 10x Your Productivity"\n- Wed: "The Future of Work: AI Integration Strategies"\n- Fri: "How Company X Increased Efficiency by 300% with AI"\n\n**Week 2**:\n- Mon: "Building Your First AI-Powered Workflow"\n- Wed: "AI Ethics in the Workplace"\n- Fri: "Productivity Metrics That Actually Matter"\n\n**Week 3**:\n- Mon: "Automating Email Management with AI"\n- Wed: "The ROI of AI Implementation"\n- Fri: "Remote Team Collaboration Tools"\n\n**Week 4**:\n- Mon: "AI-Powered Project Management"\n- Wed: "Data-Driven Decision Making"\n- Fri: "Scaling Your Business with AI"\n\nEach post should be 1500-2000 words with actionable takeaways.',
+          timestamp: '2:18 PM'
+        }
+      ]
+    },
+    {
+      id: '5',
+      title: 'Claude: React Component Architecture',
+      type: 'code',
+      source: 'Claude',
+      date: '2024-01-11',
+      tags: ['react', 'javascript', 'frontend', 'architecture'],
+      codeLanguage: 'javascript',
+      content: `// Dashboard Component Architecture
+import React, { useState, useEffect } from 'react';
+
+const Dashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await fetch('/api/dashboard');
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="dashboard">
+      <Header />
+      <MetricsGrid data={data.metrics} />
+      <ContentList data={data.content} />
+      <ActivityFeed data={data.activity} />
+    </div>
+  );
+};
+
+export default Dashboard;`
+    },
+    {
+      id: '6',
+      title: 'Midjourney: Brand Identity Concepts',
+      type: 'image',
+      source: 'Midjourney',
+      date: '2024-01-10',
+      tags: ['branding', 'logo', 'identity', 'design'],
+      imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
+      content: 'Brand identity concept showing logo variations, color palette, and typography options for a modern tech company.'
     }
   ])
 
@@ -84,6 +227,22 @@ export default function Dashboard() {
     }
   }
 
+  const formatCode = (code: string, language: string = 'javascript') => {
+    return (
+      <pre style={{
+        background: '#f8f9fa',
+        padding: '16px',
+        borderRadius: '8px',
+        overflow: 'auto',
+        fontSize: '0.9rem',
+        lineHeight: '1.5',
+        border: '1px solid #e5e5e5'
+      }}>
+        <code>{code}</code>
+      </pre>
+    )
+  }
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -104,39 +263,98 @@ export default function Dashboard() {
           justifyContent: 'space-between', 
           alignItems: 'center' 
         }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.02em' }}>
-              Neural Hub Dashboard
-            </h1>
-            <p style={{ margin: '4px 0 0 0', opacity: 0.8, fontSize: '0.9rem' }}>
-              Organize your AI content
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAddForm(true)}
+          <a 
+            href="/"
             style={{
-              background: 'white',
-              color: '#667eea',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '12px',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
               cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              letterSpacing: '-0.01em'
+              transition: 'all 0.2s ease'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)'
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)'
+              e.currentTarget.style.transform = 'scale(1.02)'
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
+              e.currentTarget.style.transform = 'scale(1)'
             }}
           >
-            + Add Content
-          </button>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              color: 'white',
+              backdropFilter: 'blur(10px)'
+            }}>
+              N
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '700', letterSpacing: '-0.02em' }}>
+                Neural Hub Dashboard
+              </h1>
+              <p style={{ margin: '4px 0 0 0', opacity: 0.8, fontSize: '0.9rem' }}>
+                Organize your AI content
+              </p>
+            </div>
+          </a>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <a 
+              href="/"
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.3)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.2)'
+              }}
+            >
+              ← Back to Home
+            </a>
+            <button
+              onClick={() => setShowAddForm(true)}
+              style={{
+                background: 'white',
+                color: '#667eea',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                transition: 'all 0.2s ease',
+                letterSpacing: '-0.01em'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)'
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)'
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              + Add Content
+            </button>
+          </div>
         </div>
       </header>
 
@@ -234,6 +452,7 @@ export default function Dashboard() {
               e.currentTarget.style.transform = 'translateY(0)'
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
             }}
+            onClick={() => setSelectedContent(item)}
             >
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
                 <span style={{ 
@@ -300,6 +519,160 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Content Detail Modal */}
+      {selectedContent && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '32px',
+            borderRadius: '16px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            border: '1px solid #f0f0f0'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ 
+                margin: 0,
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#333',
+                letterSpacing: '-0.02em'
+              }}>
+                {selectedContent.title}
+              </h2>
+              <button
+                onClick={() => setSelectedContent(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '8px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ color: '#666', fontSize: '0.9rem', margin: '0 0 16px 0' }}>
+                {selectedContent.source} • {selectedContent.date}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px' }}>
+                {selectedContent.tags.map(tag => (
+                  <span key={tag} style={{
+                    background: '#f8f9fa',
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    fontSize: '0.8rem',
+                    color: '#666',
+                    fontWeight: '500',
+                    border: '1px solid #f0f0f0'
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Content Display */}
+            <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px' }}>
+              {selectedContent.type === 'chat' && selectedContent.conversation && (
+                <div>
+                  {selectedContent.conversation.map((message, index) => (
+                    <div key={index} style={{
+                      marginBottom: '16px',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: message.role === 'user' ? '#f8f9fa' : '#667eea',
+                      color: message.role === 'user' ? '#333' : 'white',
+                      maxWidth: '80%',
+                      marginLeft: message.role === 'user' ? '0' : 'auto'
+                    }}>
+                      <div style={{ 
+                        fontSize: '0.8rem', 
+                        opacity: 0.7, 
+                        marginBottom: '8px',
+                        fontWeight: '600'
+                      }}>
+                        {message.role === 'user' ? 'You' : selectedContent.source} • {message.timestamp}
+                      </div>
+                      <div style={{ 
+                        whiteSpace: 'pre-wrap',
+                        lineHeight: '1.5'
+                      }}>
+                        {message.message}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedContent.type === 'image' && selectedContent.imageUrl && (
+                <div>
+                  <img 
+                    src={selectedContent.imageUrl} 
+                    alt={selectedContent.title}
+                    style={{
+                      width: '100%',
+                      borderRadius: '12px',
+                      marginBottom: '16px'
+                    }}
+                  />
+                  <p style={{ color: '#666', lineHeight: '1.6' }}>
+                    {selectedContent.content}
+                  </p>
+                </div>
+              )}
+
+              {selectedContent.type === 'code' && selectedContent.content && (
+                <div>
+                  <div style={{ 
+                    background: '#f8f9fa', 
+                    padding: '8px 12px', 
+                    borderRadius: '8px 8px 0 0',
+                    border: '1px solid #e5e5e5',
+                    borderBottom: 'none',
+                    fontSize: '0.8rem',
+                    color: '#666',
+                    fontWeight: '600'
+                  }}>
+                    {selectedContent.codeLanguage || 'Code'}
+                  </div>
+                  {formatCode(selectedContent.content, selectedContent.codeLanguage)}
+                </div>
+              )}
+
+              {selectedContent.type === 'text' && selectedContent.content && (
+                <div style={{ 
+                  color: '#333',
+                  lineHeight: '1.6',
+                  fontSize: '1rem'
+                }}>
+                  {selectedContent.content}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Content Modal */}
       {showAddForm && (
