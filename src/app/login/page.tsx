@@ -344,11 +344,41 @@ export default function LoginPage() {
                 cursor: 'pointer',
                 fontSize: '0.9rem',
                 fontWeight: '500',
-                textDecoration: 'underline'
+                textDecoration: 'underline',
+                marginBottom: '12px'
               }}
             >
               {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
+            
+            {!isRegistering && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Show forgot password form
+                    setError('')
+                    setEmail('')
+                    setPassword('')
+                    setName('')
+                    // In a real app, you'd navigate to a forgot password page
+                    // For now, we'll show a simple message
+                    setError('Please contact support to reset your password, or use the test account: test@example.com / test123')
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#718096',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>

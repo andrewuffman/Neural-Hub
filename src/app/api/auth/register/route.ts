@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-
-// Simple in-memory user storage (replace with database in production)
-let users: any[] = []
+import crypto from 'crypto'
+import { userStorage } from '@/lib/users'
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,8 +22,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!email.includes('@')) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      )
+    }
+
     // Check if user already exists
-    const existingUser = users.find(user => user.email === email)
+    const existingUser = userStorage.findByEmail(email)
     if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists' },
@@ -35,28 +41,30 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    // Generate email verification token
+    const emailVerificationToken = crypto.randomBytes(32).toString('hex')
+    const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+
     // Create user
-    const newUser = {
-      id: Date.now().toString(),
+    const newUser = userStorage.createUser({
       email,
       name,
       password: hashedPassword,
-      createdAt: new Date().toISOString(),
-      content: [],
-      settings: {
-        theme: 'light',
-        notifications: true
-      }
-    }
+      emailVerificationToken,
+      emailVerificationExpires
+    })
 
-    users.push(newUser)
+    // In production, send verification email here
+    console.log('Email verification token:', emailVerificationToken)
+    console.log('Verification URL:', `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify-email?token=${emailVerificationToken}`)
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = newUser
+    // Return user without password and sensitive data
+    const { password: _, emailVerificationToken: __, ...userWithoutSensitiveData } = newUser
 
     return NextResponse.json({
-      message: 'User created successfully',
-      user: userWithoutPassword
+      message: 'User created successfully. Please check your email to verify your account.',
+      user: userWithoutSensitiveData,
+      requiresEmailVerification: true
     }, { status: 201 })
 
   } catch (error) {
