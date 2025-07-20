@@ -3,46 +3,38 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function LoginPage() {
+export default function TestVerificationPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [isRegistering, setIsRegistering] = useState(false)
-  const [name, setName] = useState('')
+  const [message, setMessage] = useState('')
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleManualVerification = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError('')
+    setMessage('')
 
     try {
-      const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login'
-      const body = isRegistering ? { email, password, name } : { email, password }
-
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/auth/verify-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        // Store token and user data
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-        
-        // Redirect to dashboard
-        router.push('/dashboard')
+        setMessage(`✅ ${data.message}`)
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
       } else {
-        setError(data.error || 'Something went wrong')
+        setMessage(`❌ ${data.error}`)
       }
     } catch (error) {
-      setError('Network error. Please try again.')
+      setMessage('❌ Network error. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -140,7 +132,7 @@ export default function LoginPage() {
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
         border: '1px solid #f0f0f0',
         width: '100%',
-        maxWidth: '400px',
+        maxWidth: '500px',
         marginTop: '80px'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -151,59 +143,31 @@ export default function LoginPage() {
             color: '#1a202c',
             letterSpacing: '-0.02em'
           }}>
-            {isRegistering ? 'Create Account' : 'Welcome Back'}
+            Test Email Verification
           </h2>
           <p style={{ 
             margin: 0,
             color: '#718096',
             fontSize: '1rem'
           }}>
-            {isRegistering ? 'Join Neural Hub to organize your AI content' : 'Sign in to your Neural Hub account'}
+            Manually verify your email for testing purposes
           </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {isRegistering && (
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px', 
-                fontWeight: '600',
-                color: '#374151',
-                fontSize: '0.9rem'
-              }}>
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '14px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '12px',
-                  fontSize: '1rem',
-                  outline: 'none',
-                  transition: 'all 0.2s ease',
-                  fontFamily: 'inherit',
-                  boxSizing: 'border-box'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#667eea'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb'
-                  e.target.style.boxShadow = 'none'
-                }}
-                placeholder="Enter your full name"
-              />
-            </div>
-          )}
+        <div style={{
+          background: '#fef3c7',
+          border: '1px solid #f59e0b',
+          color: '#92400e',
+          padding: '16px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          fontSize: '0.9rem'
+        }}>
+          <strong>Note:</strong> This is a testing page. In production, users would receive verification emails. For now, enter your email below to manually verify your account.
+        </div>
 
-          <div style={{ marginBottom: '20px' }}>
+        <form onSubmit={handleManualVerification}>
+          <div style={{ marginBottom: '24px' }}>
             <label style={{ 
               display: 'block', 
               marginBottom: '8px', 
@@ -211,7 +175,7 @@ export default function LoginPage() {
               color: '#374151',
               fontSize: '0.9rem'
             }}>
-              Email
+              Email Address
             </label>
             <input
               type="email"
@@ -237,59 +201,21 @@ export default function LoginPage() {
                 e.target.style.borderColor = '#e5e7eb'
                 e.target.style.boxShadow = 'none'
               }}
-              placeholder="Enter your email"
+              placeholder="Enter your email address"
             />
           </div>
 
-          <div style={{ marginBottom: '32px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '8px', 
-              fontWeight: '600',
-              color: '#374151',
-              fontSize: '0.9rem'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '12px',
-                fontSize: '1rem',
-                outline: 'none',
-                transition: 'all 0.2s ease',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#667eea'
-                e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb'
-                e.target.style.boxShadow = 'none'
-              }}
-              placeholder="Enter your password"
-            />
-          </div>
-
-          {error && (
+          {message && (
             <div style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#dc2626',
+              background: message.includes('✅') ? '#f0fff4' : '#fef2f2',
+              border: `1px solid ${message.includes('✅') ? '#9ae6b4' : '#fecaca'}`,
+              color: message.includes('✅') ? '#22543d' : '#dc2626',
               padding: '12px 16px',
               borderRadius: '8px',
               marginBottom: '20px',
               fontSize: '0.9rem'
             }}>
-              {error}
+              {message}
             </div>
           )}
 
@@ -324,75 +250,21 @@ export default function LoginPage() {
               }
             }}
           >
-            {isLoading ? 'Processing...' : (isRegistering ? 'Create Account' : 'Sign In')}
+            {isLoading ? 'Verifying...' : 'Verify Email'}
           </button>
 
           <div style={{ textAlign: 'center' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegistering(!isRegistering)
-                setError('')
-                setEmail('')
-                setPassword('')
-                setName('')
-              }}
+            <a 
+              href="/login"
               style={{
-                background: 'none',
-                border: 'none',
                 color: '#667eea',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                fontWeight: '500',
                 textDecoration: 'underline',
-                marginBottom: '12px'
+                fontSize: '0.9rem',
+                fontWeight: '500'
               }}
             >
-              {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-            </button>
-            
-            {!isRegistering && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Show forgot password form
-                    setError('')
-                    setEmail('')
-                    setPassword('')
-                    setName('')
-                    // In a real app, you'd navigate to a forgot password page
-                    // For now, we'll show a simple message
-                    setError('Please contact support to reset your password, or use the test account: test@example.com / test123')
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#718096',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    textDecoration: 'underline',
-                    marginBottom: '8px',
-                    display: 'block'
-                  }}
-                >
-                  Forgot your password?
-                </button>
-                <a 
-                  href="/test-verification"
-                  style={{
-                    color: '#667eea',
-                    textDecoration: 'underline',
-                    fontSize: '0.9rem',
-                    fontWeight: '500',
-                    display: 'block'
-                  }}
-                >
-                  Need to verify your email? (Testing)
-                </a>
-              </div>
-            )}
+              Back to Login
+            </a>
           </div>
         </form>
       </div>

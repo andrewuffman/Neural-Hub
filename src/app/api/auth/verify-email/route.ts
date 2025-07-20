@@ -38,4 +38,48 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// POST - Manual verification for testing (bypass email)
+export async function POST(request: NextRequest) {
+  try {
+    const { email } = await request.json()
+
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email is required' },
+        { status: 400 }
+      )
+    }
+
+    // Find user and manually verify
+    const user = userStorage.findByEmail(email)
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    // Manually verify the email
+    user.emailVerified = true
+    user.emailVerificationToken = undefined
+    user.emailVerificationExpires = undefined
+
+    // Return success
+    const { password: _, emailVerificationToken: __, passwordResetToken: ___, twoFactorSecret: ____, ...userWithoutSensitiveData } = user
+
+    return NextResponse.json({
+      message: 'Email manually verified for testing',
+      user: userWithoutSensitiveData
+    })
+
+  } catch (error) {
+    console.error('Manual verification error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 } 
