@@ -1,5 +1,6 @@
 'use client'
 
+import Navigation from "@/components/Navigation"
 import React, { useState } from 'react'
 
 export default function HomePage() {
