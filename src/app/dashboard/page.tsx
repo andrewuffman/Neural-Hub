@@ -21,6 +21,7 @@ interface User {
   id: string
   email: string
   name: string
+  emailVerified: boolean
   settings: {
     theme: string
     notifications: boolean
@@ -55,7 +56,13 @@ export default function Dashboard() {
     }
 
     try {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      // Ensure emailVerified property exists
+      const userWithEmailVerified = {
+        ...parsedUser,
+        emailVerified: parsedUser.emailVerified || false
+      }
+      setUser(userWithEmailVerified)
       fetchUserContent(token)
     } catch (error) {
       console.error('Error loading user data:', error)
