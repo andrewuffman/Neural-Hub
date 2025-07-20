@@ -34,6 +34,11 @@ interface User {
       postalCode: string
       country: string
     }
+    paymentMethod?: {
+      type: string
+      last4: string
+      brand: string
+    }
   }
 }
 
